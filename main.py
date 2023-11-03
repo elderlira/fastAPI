@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi import HTTPException
 from fastapi import status
+from fastapi import Path
 import sys, os
 
 dir_atual = os.path.dirname(os.path.abspath("main.py"))
@@ -29,25 +30,22 @@ async def inictial_cursos():
 
 
 @app.get("/cursos/{id}")
-async def cursos_id(id: int):
+async def cursos_id(
+    id: int = Path(
+        title="Id do curso",
+        description="O valor numerico deve ser acima de zero",
+        gt=0,
+    )
+):
     id = int(id)
 
     try:
         curso = cursos[id]
         return curso
     except KeyError:
-        # maneira do curso
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Curso nao encontrado"
         )
-
-    # uma maneira
-    # if status != status.HTTP_200_OK:
-    #     return "mensagem de erro"
-
-    # uma maneira
-    # if cursos.get(id) == None:
-    #     return  'curso nao encontrado'
 
 
 @app.post("/cursos", status_code=status.HTTP_201_CREATED)
@@ -66,7 +64,14 @@ async def adicionar_curso(curso: models.Curso):
 
 
 @app.put("/curso/{id}", status_code=status.HTTP_202_ACCEPTED)
-async def atualizar_curso(id: int, curso: models.Curso):
+async def atualizar_curso(
+    curso: models.Curso,
+    id: int = Path(
+        title="Id do curso",
+        description="Informar o id do curso que deseja atualizar as informações",
+        gt=0,
+    ),
+):
     if id in cursos:
         cursos[id] = curso
         curso.id = id
@@ -76,7 +81,13 @@ async def atualizar_curso(id: int, curso: models.Curso):
 
 
 @app.delete("/curso/{id}", status_code=status.HTTP_200_OK)
-async def deletar_curso(id: int):
+async def deletar_curso(
+    id: int = Path(
+        title="Id do curso",
+        description="Informar o id do curso que deseja excluir",
+        gt=0,
+    )
+):
     if id in cursos:
         del cursos[id]
         return {
