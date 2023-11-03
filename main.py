@@ -5,8 +5,8 @@ from fastapi import Path
 import sys, os
 
 dir_atual = os.path.dirname(os.path.abspath("main.py"))
-caminho_pasta = os.path.join(dir_atual, "models")
-sys.path.append(caminho_pasta)
+caminho_desejado = os.path.join(dir_atual, "models/curso")
+sys.path.append(caminho_desejado)
 import models
 
 app = FastAPI()
