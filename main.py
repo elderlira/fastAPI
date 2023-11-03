@@ -39,7 +39,7 @@ mensagem_erro = "Curso nao encontrado na bd local"
 @app.get(
     "/cursos",
     status_code=status.HTTP_202_ACCEPTED,
-    # response_model=list[models.Curso],
+    response_model=list[Curso],
     description="Obtenha a lista contendo todos os cursos",
 )
 async def inictial_cursos(db: Any = Depends(conexao_db_fake)):
@@ -73,7 +73,7 @@ async def cursos_id(
     "/cursos",
     status_code=status.HTTP_201_CREATED,
     description="Adicione um novo curso a lista",
-    # response_model=models.Curso,
+    response_model=Curso,
 )
 async def adicionar_curso(curso: Curso):
     try:
