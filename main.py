@@ -6,14 +6,16 @@ from time import sleep
 from fastapi import Depends
 from typing import Any
 import sys, os
+import models
+
+from models import cursos, Curso
 
 dir_atual = os.path.dirname(os.path.abspath("main.py"))
 caminho_desejado = os.path.join(dir_atual, "models/curso")
 sys.path.append(caminho_desejado)
-import models
 
 app = FastAPI()
-time = 5
+time = 1
 
 
 async def conexao_db_fake():
@@ -31,25 +33,24 @@ async def conexao_db_fake():
         print("Conexao finalizada")
 
 
-cursos = {
-    1: {"id": 1, "titulo": "Programacao para leigos", "aulas": 25, "horas": 80},
-    2: {
-        "id": 2,
-        "titulo": "Algoritmos e logica de programacao",
-        "aulas": 55,
-        "horas": 110,
-    },
-}
-
 mensagem_erro = "Curso nao encontrado na bd local"
 
 
-@app.get("/cursos", status_code=status.HTTP_202_ACCEPTED)
+@app.get(
+    "/cursos",
+    status_code=status.HTTP_202_ACCEPTED,
+    # response_model=list[models.Curso],
+    description="Obtenha a lista contendo todos os cursos",
+)
 async def inictial_cursos(db: Any = Depends(conexao_db_fake)):
     return cursos
 
 
-@app.get("/cursos/{id}", status_code=status.HTTP_202_ACCEPTED)
+@app.get(
+    "/cursos/{id}",
+    status_code=status.HTTP_202_ACCEPTED,
+    description="Obter o curso conforme o ID",
+)
 async def cursos_id(
     id: int = Path(
         title="Id do curso",
@@ -60,7 +61,7 @@ async def cursos_id(
     id = int(id)
 
     try:
-        curso = cursos[id]
+        curso = models.cursos[id - 1]
         return curso
     except KeyError:
         raise HTTPException(
@@ -68,12 +69,17 @@ async def cursos_id(
         )
 
 
-@app.post("/cursos", status_code=status.HTTP_201_CREATED)
-async def adicionar_curso(curso: models.Curso):
+@app.post(
+    "/cursos",
+    status_code=status.HTTP_201_CREATED,
+    description="Adicione um novo curso a lista",
+    # response_model=models.Curso,
+)
+async def adicionar_curso(curso: Curso):
     try:
         if curso.id not in cursos:
             size = len(cursos) + 1
-            cursos[size] = curso
+            cursos.append(curso)
             curso.id = size
             return curso
     except KeyError:
@@ -83,7 +89,12 @@ async def adicionar_curso(curso: models.Curso):
         )
 
 
-@app.put("/curso/{id}", status_code=status.HTTP_202_ACCEPTED)
+@app.put(
+    "/curso/{id}",
+    status_code=status.HTTP_202_ACCEPTED,
+    description="Atualize um curso já existente",
+    response_model=Curso,
+)
 async def atualizar_curso(
     curso: models.Curso,
     id: int = Path(
@@ -92,15 +103,19 @@ async def atualizar_curso(
         gt=0,
     ),
 ):
-    if id in cursos:
-        cursos[id] = curso
+    if cursos[id] in cursos:
+        cursos[id - 1] = curso
         curso.id = id
         return curso
     else:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=mensagem_erro)
 
 
-@app.delete("/curso/{id}", status_code=status.HTTP_200_OK)
+@app.delete(
+    "/curso/{id}",
+    status_code=status.HTTP_200_OK,
+    description="Exclua um curso da lista",
+)
 async def deletar_curso(
     id: int = Path(
         title="Id do curso",
@@ -108,8 +123,8 @@ async def deletar_curso(
         gt=0,
     ),
 ):
-    if id in cursos:
-        del cursos[id]
+    if cursos[id - 1] in cursos:
+        del cursos[id - 1]
         return {
             "messagem": "Curso deletado com sucesso",
             "status": status.HTTP_204_NO_CONTENT,
