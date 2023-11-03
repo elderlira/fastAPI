@@ -2,6 +2,9 @@ from fastapi import FastAPI
 from fastapi import HTTPException
 from fastapi import status
 from fastapi import Path
+from time import sleep
+from fastapi import Depends
+from typing import Any
 import sys, os
 
 dir_atual = os.path.dirname(os.path.abspath("main.py"))
@@ -10,6 +13,23 @@ sys.path.append(caminho_desejado)
 import models
 
 app = FastAPI()
+time = 5
+
+
+async def conexao_db_fake():
+    try:
+        print("Conexao estabelecida")
+        print(f"Aguarde {time}s")
+        for x in range(1, time + 1):
+            print(x)
+            sleep(1)
+        print("gerando os dados")
+    except Exception as error:
+        print(error)
+    finally:
+        sleep(1)
+        print("Conexao finalizada")
+
 
 cursos = {
     1: {"id": 1, "titulo": "Programacao para leigos", "aulas": 25, "horas": 80},
@@ -24,12 +44,12 @@ cursos = {
 mensagem_erro = "Curso nao encontrado na bd local"
 
 
-@app.get("/cursos")
-async def inictial_cursos():
+@app.get("/cursos", status_code=status.HTTP_202_ACCEPTED)
+async def inictial_cursos(db: Any = Depends(conexao_db_fake)):
     return cursos
 
 
-@app.get("/cursos/{id}")
+@app.get("/cursos/{id}", status_code=status.HTTP_202_ACCEPTED)
 async def cursos_id(
     id: int = Path(
         title="Id do curso",
@@ -86,7 +106,7 @@ async def deletar_curso(
         title="Id do curso",
         description="Informar o id do curso que deseja excluir",
         gt=0,
-    )
+    ),
 ):
     if id in cursos:
         del cursos[id]
